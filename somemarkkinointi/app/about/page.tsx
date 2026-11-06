@@ -9,11 +9,11 @@ export default function AboutPage() {
                     About us
                 </Link>
                 <h1 className="text-3xl font-bold text-gray-800 mb-4 text-center">
-                    Tietoa tekijästä 👩‍💻
+                    Tietoa Tekijästä 👩‍💻
                 </h1>
 
                 <p className="text-gray-600 mb-4 leading-relaxed">
-                    Moi! Olen opiskelija ja kehittänyt tämän kampaamon sometyökalun MVP:nä kouluprojektia varten. Sovelluksen tavoitteena on nopeuttaa kampaamoiden arkipäiväistä somemarkkinointia tekoälyn avulla.
+                    Lisätiedot Tulossa!
                 </p>
 
                 <div className="mb-6">

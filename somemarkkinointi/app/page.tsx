@@ -4,6 +4,7 @@ import { useState } from "react";
 
 export default function Home() {
   const [aihe, setAihe] = useState("");
+  const [someAlusta, setSomeAlusta] = useState("");
   const [vastaus, setVastaus] = useState("");
   const [ladataan, setLadataan] = useState(false);
 
@@ -50,6 +51,18 @@ export default function Home() {
             <option value="Hääkampaukset varattavissa">Hääkampaukset</option>
             <option value="Hiusten hoito ja hoitotuotteet">Hiusten hoito</option>
             <option value="Tarjoukset ja kampanjat">Tarjoukset ja kampanjat</option>
+          </select>
+
+          <select
+            value={someAlusta}
+            onChange={(e) => setSomeAlusta(e.target.value)}
+            className="border border-gray-300 p-3 rounded-lg bg-white text-gray-800"
+          >
+            <option value="" hidden>Valitse somealusta...</option>
+            <option value="Instagram">Instagram</option>
+            <option value="Facebook">Facebook</option>
+            <option value="Twitter">Twitter</option>
+            <option value="Tiktok">Tiktok</option>
           </select>
 
           <button
