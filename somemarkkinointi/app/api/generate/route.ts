@@ -1,33 +1,55 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-export async function POST(req: Request) {
+export async function POST(request: Request) {
   try {
-    const { aihe } = await req.json();
+    const { topic, channel, tone, includeHashtags } = await request.json();
+
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return NextResponse.json({ error: 'GEMINI_API_KEY puuttuu .env.local -tiedostosta.' }, { status: 500 });
+    }
+
+    const hashtagInstruction = includeHashtags 
+      ? 'Lisää loppuun 3-4 myyntiä tukevaa hashtagia.' 
+      : 'ÄLÄ lisää yhtään hashtagia tekstin loppuun.';
+
+    const promptText = `Olet menestyvän kampaamon markkinoinnin ammattilainen. Kirjoita lyhyt, iskevä ja puhtaasti myynnillinen ${channel}-markkinointipostaus tyylillä "${tone}" aiheesta: "${topic}".
+
+TÄRKEÄÄ:
+- Tämä on MAINOS, ei opetusartikkeli tai blogiteksti.
+- Myy palvelua tai tuotetta ja ohjaa asiakas toimimaan (esim. varaamaan aika).
+- Pysy ytimekkäänä ja napakkana.
+- Lisää muutama tyylikäs emoji.
+- ${hashtagInstruction}`;
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`,
       {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                {
-                  text: `Olet kampaamon somemarkkinoija. Tee lyhyt, houkutteleva Instagram-julkaisu aiheesta: ${aihe}. Lisää mukaan kuvaidea ja hashtageja.`,
-                },
-              ],
-            },
-          ],
+          contents: [{ parts: [{ text: promptText }] }],
+          generationConfig: {
+            maxOutputTokens: 300,
+            temperature: 0.7,
+          },
         }),
       }
     );
 
-    const data = await response.json();
-    const teksti = data.candidates?.[0]?.content?.parts?.[0]?.text || "Ei vastausta.";
+    if (!response.ok) {
+      const errorData = await response.json();
+      return NextResponse.json({ error: errorData.error?.message || 'Virhe API-kutsussa' }, { status: response.status });
+    }
 
-    return NextResponse.json({ tulos: teksti });
-  } catch (error) {
-    return NextResponse.json({ error: "Jotain meni pieleen" }, { status: 500 });
+    const data = await response.json();
+    const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Vastausta ei saatu.';
+
+    return NextResponse.json({ text: generatedText });
+
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message || 'Palvelinvirhe.' }, { status: 500 });
   }
 }
