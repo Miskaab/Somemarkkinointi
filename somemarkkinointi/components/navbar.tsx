@@ -11,12 +11,6 @@ export default function Navbar() {
         <Link href="/about" className="text-gray-600 hover:text-pink-600 font-medium transition">
           About us
         </Link>
-        <Link 
-          href="/login" 
-          className="bg-pink-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-pink-700 transition"
-        >
-          Kirjaudu ulos
-        </Link>
       </div>
     </nav>
   );
