@@ -11,6 +11,7 @@ export async function POST(request: Request) {
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
   if (!signature || !webhookSecret) {
+    console.error('Webhook: stripe-signature tai STRIPE_WEBHOOK_SECRET puuttuu.');
     return NextResponse.json({ error: 'Webhook-asetukset puuttuvat.' }, { status: 400 });
   }
 
@@ -19,7 +20,11 @@ export async function POST(request: Request) {
   try {
     event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
   } catch (err: any) {
-    return NextResponse.json({ error: `Webhook-allekirjoitusvirhe: ${err.message}` }, { status: 400 });
+    console.error('Webhook-allekirjoitusvirhe:', err?.message);
+    return NextResponse.json(
+      { error: `Webhook-allekirjoitusvirhe: ${err?.message}` },
+      { status: 400 }
+    );
   }
 
   try {
@@ -28,7 +33,9 @@ export async function POST(request: Request) {
       const userId = session.metadata?.userId;
       const email = session.customer_details?.email || session.customer_email || '';
 
-      if (userId) {
+      if (!userId) {
+        console.warn('Webhook: checkout.session.completed tuli ilman metadata.userId-arvoa.');
+      } else {
         await sql`
           INSERT INTO users (id, email, usage_count, is_pro)
           VALUES (${userId}, ${email}, 0, true)
@@ -36,6 +43,7 @@ export async function POST(request: Request) {
           SET is_pro = true,
               email = COALESCE(NULLIF(EXCLUDED.email, ''), users.email)
         `;
+        console.log(`Webhook: käyttäjä ${userId} päivitetty Pro-tilaan.`);
       }
     }
 
@@ -49,11 +57,16 @@ export async function POST(request: Request) {
           SET is_pro = false
           WHERE id = ${userId}
         `;
+        console.log(`Webhook: käyttäjän ${userId} Pro-tila poistettu.`);
       }
     }
 
     return NextResponse.json({ received: true });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Webhook-käsittely epäonnistui.' }, { status: 500 });
+    console.error('Webhook-tietokantavirhe:', error?.message);
+    return NextResponse.json(
+      { error: error?.message || 'Webhook-käsittely epäonnistui.' },
+      { status: 500 }
+    );
   }
 }
